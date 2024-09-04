@@ -2,7 +2,7 @@
 
 ## Voraussetzungen
 
--   Guide: [Setup Guide Laravel](/wiki/01-Setup-Guide-Laravel.md)
+-   Guide: [Setup Guide Laravel](/wiki/01-Setup-Guide-Laravel-API.md)
 -   Node.js
 -   NPM
 

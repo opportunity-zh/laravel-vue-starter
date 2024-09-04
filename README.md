@@ -10,7 +10,7 @@ Dieses Repository wurde nach Anleitung aufgebaut und getestet. Es sollte keine P
 
 ## Eigene Installation
 
-1. Backend installieren: [Setup Guide Laravel](/wiki/01-Setup-Guide-Laravel.md)
+1. Backend installieren: [Setup Guide Laravel](/wiki/01-Setup-Guide-Laravel-API.md)
 2. Frontend installieren: [Setup Guide Vue.js Frontend](/wiki/02-Setup-Guide-Laravel-Vue-Frontend.md)
 
 ## Repository direkt verwenden
