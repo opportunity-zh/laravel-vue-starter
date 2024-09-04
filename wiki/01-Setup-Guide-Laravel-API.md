@@ -363,4 +363,4 @@ Geh in phpMyAdmin `http://localhost:8080` und prüfe die Datenbank `laravel` und
 
 ## Vue Setup
 
-[Setup Guide Vue.js Frontend](./02-Setup-Guide-Laravel-Vue-Frontend.md)
+[Setup Guide Vue.js Frontend](/wiki/02-Setup-Guide-Laravel-Vue-Frontend.md)
