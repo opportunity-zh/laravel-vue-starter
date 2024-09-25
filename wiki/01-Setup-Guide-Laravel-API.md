@@ -11,13 +11,14 @@ Das Ziel ist es, eine lokale Entwicklungsumgebung aufzusetzen, die es ermöglich
 -   Empfehlenswert: PHP 8.0 oder höher (https://www.php.net/downloads)
 -   Empfehlenswert: Postman (https://www.postman.com/downloads/)
 
-# Installation
+
+## Installation
 
 Für ein besseres zusammenarbeiten installieren wir Laravel in einem Docker Container. Für Laravel gibt es ein offizielles Erweiterungspaket namens Sail, das die Installation und Verwaltung von Laravel in einem Docker-Container vereinfacht. Sail kann auch nachträglich installiert werden, aber es ist einfacher, es direkt bei der Installation zu verwenden. Es installiert Laravel mit MySQL und Redis und konfiguriert alles für die Verwendung mit Docker.
 
 Dokumentation: https://laravel.com/docs/11.x/sail
 
-## 1. Laravel mit Docker (Sail) installieren
+### 1. Laravel mit Docker (Sail) installieren
 Laravel mit Sail Docs: https://laravel.com/docs/11.x/installation#docker-installation-using-sail
 Wir verwenden den CURL-Befehl für Linux, um Sail zu installieren. Führe den folgenden Befehl im Terminal aus:
 
@@ -33,6 +34,7 @@ Wechsle in das Projektverzeichnis:
 cd example-app
 ```
 
+### 2. phpMyAdmin hinzufügen
 Wir möchten noch phpMyAdmin hinzufügen, um die Datenbank zu verwalten. Füge die folgende Zeile in die Datei docker-compose.yml ein. Achte darauf, dass die Einrückung (Tab) korrekt ist. Füge die Zeile unterhalb von MySQL hinzu:
 
 ```yaml
@@ -52,13 +54,13 @@ phpmyadmin:
         - sail
 ```
 
-## 2. Docker Container starten
+### 3. Docker Container starten
 
-## Befehl Sail alias erstellen
+#### Befehl Sail alias erstellen
 Überspringe diesen Schritt, wenn du den Alias bereits erstellt hast.
 [Sail alias erstellen](/wiki/Sail-Befehl-Bash.md)
 
-### Befehl sail up ausführen
+#### Befehl sail up ausführen
 
 Jetzt können wir Sail verwenden, um die Docker-Container zu starten:
 
@@ -69,7 +71,7 @@ sail up
 
 Jetzt sollte unter http://localhost:80 die Laravel-Startseite erscheinen. Unter http://localhost:8080 kann phpMyAdmin aufgerufen werden. Womöglich ist eine Error-Seite unter http://localhost:80 zu sehen.
 
-### Permissions Problem
+#### Permissions Problem
 
 Bei Linux könnte es sein, dass die Berechtigungen für die Dateien nicht korrekt sind. Das könnte an Docker Desktop für Linux liegen. Lese die Error-Meldung, siehst du im Pfad "/var/www/html/storage/..." und den Fehler "Permission denied", dann sind die Berechtigungen nicht korrekt. Um die Berechtigungen zu korrigieren, führe den folgenden Befehl aus:
 
@@ -90,7 +92,7 @@ Finde den Prozess, der den Port verwendet übertrage die PID in den foglenden Be
 ```bash
 sudo kill <PID>
 ```
-# API aktivieren/installieren
+## API aktivieren/installieren
 
 Laravel 11 wird im Standard Konfiguration klein gehalten, gewisse Funktionen und Datein müssen wir selber aktivieren/hinzufügen. Um die API route Datei zu aktivieren, schreibe folgenden command in die Konsole:
 
@@ -104,7 +106,7 @@ Die Datei `routes/api.php` wird erstellt und die API-Route wird aktiviert.
 
 Die Datei `routes/web.php` ist wird nur für Blade-Views verwendet und wird nicht benötigt. (Optional: Kann ignoriert werden, wenn das Frontend mit Vue.js oder React.js decoupled von Laravel entwickelt wird.)
 
-## API routes aktivieren
+### API routes aktivieren
 
 Prüfe ob folgende Zeile in in der Datei `bootstrap/app.php` bei `withRouting` hinterlegt ist:
 
@@ -118,7 +120,7 @@ Prüfe ob folgende Zeile in in der Datei `bootstrap/app.php` bei `withRouting` h
 ```
 ***Version Info: Mit Laravel 11 wird die API-Route automatisch aktiviert, bei früheren Versionen muss die API-Route manuell aktiviert werden.***
 
-## Test API-Route erstellen
+### Test API-Route erstellen
 
 Für das Testen der API-Route erstellen wir eine einfache Route, die eine JSON-Antwort zurückgibt. Füge folgende Zeilen in die Datei `routes/api.php` ein, lasse die anderen Zeilen unverändert (Request und Facades\Route sollten bereits importiert sein):
 
@@ -132,7 +134,7 @@ Route::get('/test', function () {
 });
 ```
 
-## Laravel Command um alle Routes zu sehen
+#### Laravel Command um alle Routes zu sehen
 
 Wir können diesen Artisan Command verwenden, um alle Routes zu sehen.Praktisch um für die Übersicht zu behalten, welche Routes wir schon aktiv haben, andere Erweiterungen oder Module könnten schon eigene Routes registriert haben.
 
@@ -144,7 +146,7 @@ Die /api/test Route sollte in der Liste erscheinen.
 
 Rufe die Route auf http://localhost/api/test auf und prüfe, ob die Antwort `{"message":"Hello World!"}` ist.
 
-## Sanctum Konfiguration
+### Sanctum Konfiguration
 
 Sanctum ist ein einfaches Paket zur Authentifizierung von APIs. Es verwendet Tokens, um Benutzer zu authentifizieren. Dokumentation: https://laravel.com/docs/11.x/sanctum
 
