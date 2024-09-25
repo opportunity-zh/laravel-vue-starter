@@ -91,6 +91,12 @@ import { RouterLink, RouterView } from "vue-router";
 VITE_BASE_URL="${APP_URL}"
 ```
 
+Falls vue decoupled von Laravel ist, dann sollte die VITE_BASE_URL auf die Frontend-URL zeigen.
+
+```env
+VITE_BASE_URL="http://localhost"
+```
+
 4. Erstellen die Datei resources/js/router/index.js und fügen den folgenden Code ein:
 
 ```javascript
@@ -165,12 +171,19 @@ npm run dev
 
 Wir möchten über Pinia einen Store für die User-Authentifizierung einrichten. Wir erstellen dazu einen Store in der Datei resources/js/store/AuthStore.js.
 
+Unsere Backend API könnte auf einer anderen Domain laufen, hierzu hinterlgen wir die VITE_BACKEND_URL in der .env-Datei.
+
+```env
+VITE_BASE_URL="${APP_URL}" // Frontend URL Beispiel: https://myapp.com oder http://localhost:5173
+VITE_BACKEND_URL="${APP_URL}" // Backend URL Beispiel: https://api.myapp.com oder http://localhost:8000
+```
+
 ```javascript
 import { defineStore } from "pinia";
 import axios from "axios";
 
 export const authClient = axios.create({
-    baseURL: import.meta.env.VITE_BASE_URL,
+    baseURL: import.meta.env.VITE_BACKEND_URL,
     withCredentials: true, // required to handle the CSRF token
 });
 
@@ -246,7 +259,7 @@ Unter resources/js/router/index.js fügen wir folgenden Code hinzu:
 
 ```javascript
 const router = createRouter({
-    history: createWebHistory(import.meta.env.VITE_BASE_URL),
+    history: createWebHistory(import.meta.env.VITE_BASE_URL), // FIXME: Weird Problem with base path. Current solution is to hardcode "/".
     routes: [
         {
             path: "/",
