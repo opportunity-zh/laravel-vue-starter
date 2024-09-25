@@ -18,14 +18,7 @@ Für ein besseres zusammenarbeiten installieren wir Laravel in einem Docker Cont
 Dokumentation: https://laravel.com/docs/11.x/sail
 
 ## 1. Laravel mit Docker (Sail) installieren
-
-Nur nötig, wenn Docker Desktop verwendet wird:
-
-```bash
-# Hiermit wird der Docker Desktop auf die lokale Entwicklungsumgebung eingestellt
-docker context use default
-```
-
+Laravel mit Sail Docs: https://laravel.com/docs/11.x/installation#docker-installation-using-sail
 Wir verwenden den CURL-Befehl für Linux, um Sail zu installieren. Führe den folgenden Befehl im Terminal aus:
 
 ```bash
@@ -61,21 +54,9 @@ phpmyadmin:
 
 ## 2. Docker Container starten
 
-### Befehl Sail alias erstellen
-
+## Befehl Sail alias erstellen
 Überspringe diesen Schritt, wenn du den Alias bereits erstellt hast.
-
-Wir können nun Laravel mit Docker starten, anstatt "docker compose up" zu verwenden, verwenden wir "./vendor/bin/sail up". Dieser Befehl startet die Docker-Container und bindet die Ports für die Verwendung in der lokalen Entwicklungsumgebung. Damit wir nicht dauernd den ganzen Pfad eingeben müssen, können wir einmalig ein Alias erstellen. Öffne die Datei ~/.bashrc oder ~/.bash_aliases und füge folgende Zeile hinzu:
-
-```bash
-alias sail='bash vendor/bin/sail'
-```
-
-Führe den Befehl aus, um die Änderungen zu übernehmen:
-
-```bash
-source ~/.bashrc
-```
+[Sail alias erstellen](/wiki/Sail-Befehl-Bash.md)
 
 ### Befehl sail up ausführen
 
@@ -109,30 +90,69 @@ Finde den Prozess, der den Port verwendet übertrage die PID in den foglenden Be
 ```bash
 sudo kill <PID>
 ```
+# API aktivieren/installieren
 
-## 3. Laravel Konfiguration
+Laravel 11 wird im Standard Konfiguration klein gehalten, gewisse Funktionen und Datein müssen wir selber aktivieren/hinzufügen. Um die API route Datei zu aktivieren, schreibe folgenden command in die Konsole:
 
-Wir möchten Laravel als API nutzen. Um den Prozess zu beschleunigen, können wir verschiedene Pakete installieren, die uns die Arbeit erleichtern. Wir installieren Sanctum und Fortify, um die Authentifizierung zu vereinfachen.
+```bash
+php artisan install:api
+```
 
-### Sanctum
+***Version Info: Mit diesem Command wird ab Laravel 11 auch gerade die API-Route aktiviert und Sanctum installiert, bei früheren Versionen muss Sanctum noch manuell installiert werden.***
+
+Die Datei `routes/api.php` wird erstellt und die API-Route wird aktiviert.
+
+Die Datei `routes/web.php` ist wird nur für Blade-Views verwendet und wird nicht benötigt. (Optional: Kann ignoriert werden, wenn das Frontend mit Vue.js oder React.js decoupled von Laravel entwickelt wird.)
+
+## API routes aktivieren
+
+Prüfe ob folgende Zeile in in der Datei `bootstrap/app.php` bei `withRouting` hinterlegt ist:
+
+```php
+    ->withRouting(
+        web: __DIR__ . '/../routes/web.php',
+        api: __DIR__ . '/../routes/api.php', // to enable api routes
+        commands: __DIR__ . '/../routes/console.php',
+        health: '/up',
+    )
+```
+***Version Info: Mit Laravel 11 wird die API-Route automatisch aktiviert, bei früheren Versionen muss die API-Route manuell aktiviert werden.***
+
+## Test API-Route erstellen
+
+Für das Testen der API-Route erstellen wir eine einfache Route, die eine JSON-Antwort zurückgibt. Füge folgende Zeilen in die Datei `routes/api.php` ein, lasse die anderen Zeilen unverändert (Request und Facades\Route sollten bereits importiert sein):
+
+```php
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+// TODO: remove this on public release, only for testing!
+Route::get('/test', function () {
+    return response()->json(['message' => 'Hello World!'], 200);
+});
+```
+
+## Laravel Command um alle Routes zu sehen
+
+Wir können diesen Artisan Command verwenden, um alle Routes zu sehen.Praktisch um für die Übersicht zu behalten, welche Routes wir schon aktiv haben, andere Erweiterungen oder Module könnten schon eigene Routes registriert haben.
+
+```bash
+sail artisan route:list
+```
+
+Die /api/test Route sollte in der Liste erscheinen.
+
+Rufe die Route auf http://localhost/api/test auf und prüfe, ob die Antwort `{"message":"Hello World!"}` ist.
+
+## Sanctum Konfiguration
 
 Sanctum ist ein einfaches Paket zur Authentifizierung von APIs. Es verwendet Tokens, um Benutzer zu authentifizieren. Dokumentation: https://laravel.com/docs/11.x/sanctum
 
-```bash
-# Installiere Sanctum
-composer require laravel/sanctum
-```
-
-Die Konfigurationsdateien müssen wir noch sozuagen "veröffentlichen". Das bedeutet, dass die Dateien in das Projekt kopiert werden, damit wir sie bearbeiten können.
-
-```bash
-# Veröffentliche die Sanctum-Konfigurationsdatei
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
-```
-
 #### Sanctum Konfiguration
 
-Mit Sanctum können wir uns entscheiden, ob wir Cookies oder Tokens verwenden möchten. Für dieses Projekt verwenden wir die Session-Cookies, um die Authentifizierung zu vereinfachen.
+Mit Sanctum können wir uns entscheiden, ob wir Cookies oder Tokens verwenden möchten. Für dieses Projekt verwenden wir die Session-Cookies Authentifizierung. Das bedeutet, dass wir uns mit der API über Cookies authentifizieren. 
+
+***Alternative Info: Die andere Methode wäre, dass wir uns mit einem Token authentifizieren, der in der Datenbank gespeichert wird und wir bei jeder Anfrage mitsenden.***
 
 1. Füge folgende Zeilen in deine .env-Datei hinzu, es sollte schon ein Berreich `SESSION_` vorhanden sein:
 
@@ -143,13 +163,18 @@ SESSION_SECURE_COOKIE=true
 SANCTUM_STATEFUL_DOMAINS="localhost"
 ```
 
-2. Wir leeren den Cache, um die neuen Konfigurationen zu laden:
+2. Manchmal wird der Konfigurationscache nicht aktualisiert, wenn wir Änderungen an der Konfiguration vornehmen. Um eine Aktualisierung zu erzwingen, führe den folgenden Befehl aus:
 
 ```bash
 sail artisan config:clear
 ```
 
-3. Jetzt werden die Cors-Konfigurationen angepasst. Zuerst müssen wir die Cors-Konfigurationen für uns Entwickler veröffentlichen:
+
+3. Jetzt werden die Cors-Konfigurationen angepasst. Cors (Cross-Origin Resource Sharing) ist ein Mechanismus, der es Webseiten ermöglicht, Ressourcen von einer anderen Domain zu laden. Wenn diese Domains nicht übereinstimmen, wird die Anfrage blockiert. 
+Laravel Docs: https://laravel.com/docs/11.x/sanctum#spa-configuration
+Mozilla Docs, was sind cors: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+
+Zuerst müssen wir die Cors-Konfigurationen für uns Entwickler veröffentlichen:
 
 ```bash
 # Veröffentliche die Cors-Konfigurationsdatei
@@ -163,10 +188,20 @@ php artisan config:publish cors
 'paths' => ['api/*', 'sanctum/csrf-cookie'],
 ```
 
-Weitere Infos zu Cors Laravel: https://laravel.com/docs/11.x/sanctum#spa-configuration
-Was sind Cors: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+Die `sanctum/csrf-cookie` Route ist wichtig, damit die CSRF-Cookies gesetzt werden können.
 
-5. Jetzt müssen wir noch die Middleware für Sanctum konfigurieren. Öffne die Datei `bootstrap/app.php` und füge die Middleware `withMiddleware Funktion folgendes` hinzu:
+Zusätzlich möchten wir hier auch unsere Frontend-Domain hinzufügen, damit die Anfragen von der Frontend-Domain akzeptiert werden. Füge die Frontend-Domain in die `allowed_origins` hinzu:
+
+```php
+'allowed_origins' => [env('FRONTEND_URL', 'localhost:5173')],
+```
+In der .env-Datei fügen wir die Frontend-Domain hinzu, am besten direkt unterhalb der `APP_URL`:
+
+```bash
+FRONTEND_URL=localhost
+```
+
+5. Jetzt müssen wir noch die Middleware für Sanctum konfigurieren. Öffne die Datei `bootstrap/app.php` und füge die `$middleware->group('api', ...)` Middleware hinzu (sie muss in die `withMiddleware` Funktion hinzugefügt werden):
 
 ```php
 use Illuminate\Foundation\Application;
@@ -196,10 +231,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })->create();
 
 ```
+Jetzt ist Sanctum konfiguriert und wir können die Authentifizierung mit Cookies verwenden. Wir können auch die API-Route testen, um sicherzustellen, dass die Authentifizierung funktioniert. (Die Routes mit der Middleware `auth:sanctum` sind geschützt und benötigen eine Authentifizierung und sollten eine 401 Unauthorized zurückgeben, wenn keine Authentifizierung vorhanden ist.)
 
-### Fortify
 
-Fortify ist ein Paket, das die Authentifizierung von Benutzern vereinfacht. Es bietet verschiedene Funktionen, um die Authentifizierung zu konfigurieren. Dokumentation: https://laravel.com/docs/11.x/fortify
+## Login und Registriung API einrichten
+Für die Registrierung und das Login müssen wir die Authentifizierung konfigurieren. Das können wir mit einer eigen Logik machen oder mit dem Laravel-Paket Fortify. Fortify ist ein Paket, das die Authentifizierung von Benutzern vereinfacht. Es bietet verschiedene Funktionen, um die Authentifizierung zu konfigurieren. Dokumentation: https://laravel.com/docs/11.x/fortify
+
+### Fortify Installation
 
 ```bash
 # Installiere Fortify
@@ -214,7 +252,7 @@ php artisan fortify:install
 
 #### Fortify Konfiguration
 
-1. Fortify config anpassen, geht in die Datei `config/fortify.php` und passe folgende Zeilen an:
+Da wir nur die API verwenden, können wir die Blade-Views deaktivieren und den Prefix für die API-Routes ändern. Öffne die Datei `config/fortify.php` und ändere die folgenden Zeilen:
 
 ```php
 // find an change prefix to /api
@@ -224,7 +262,6 @@ php artisan fortify:install
 'views' => false,
 ```
 
-Jetzt sind haben die Fortify routes den Prefix `/api` und die Balde-Views sind deaktiviert, um nur die API zu verwenden. Wir können nähmlich Fortify für die Blade-Views verwenden, aber in diesem Projekt verwenden wir nur die API.
 
 ### Migrations
 
@@ -233,57 +270,11 @@ Unter `database/migrations` befinden sich die Migrations-Dateien, die die Tabell
 ```bash
 sail artisan migrate
 ```
-
-Wir müssen es mit Sail ausführen, weil wir Docker verwenden. Der Befehl `php artisan migrate` funktioniert nur, wenn wir Laravel lokal installiert haben.
+***Info: Weil wir Sail (Docker) verwenden, müssen wir es mit Sail ausführen, da wir diesen Befehl innerhalb des Docker-Containers ausführen möchtenn. Anderenfalls würde der Befehl `php artisan migrate` funktionieren, wenn wir Laravel lokal installiert haben.***
 
 Prüfe nun auf http://localhost, ob die Laravel-Startseite erscheint. Wenn ja, dann ist Laravel erfolgreich installiert und konfiguriert.
 
-## API routes bearbeiten
 
-Laravel 11 wird im Standard Konfiguration klein gehalten, gewisse Funktionen und Datein müssen wir selber aktivieren/hinzufügen. Um die API route Datei zu aktivieren, schreibe folgenden command in die Konsole:
-
-```bash
-php artisan install:api
-```
-
-Die Datei `routes/api.php` wird erstellt und die API-Route wird aktiviert. Die Datei `routes/web.php` ist wird nur für Blade-Views verwendet und wird nicht benötigt.
-
-### API routes Konfiguration importieren
-
-Füge folgende Zeile in die Datei `bootstrap/app.php` bei `withRouting` ein:
-
-```php
-    ->withRouting(
-        web: __DIR__ . '/../routes/web.php',
-        api: __DIR__ . '/../routes/api.php', // to enable api routes
-        commands: __DIR__ . '/../routes/console.php',
-        health: '/up',
-    )
-```
-
-### Test API-Route erstellen
-
-Für das Testen der API-Route erstellen wir eine einfache Route, die eine JSON-Antwort zurückgibt. Füge folgende Zeilen in die Datei `routes/api.php` ein:
-
-```php
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
-// TODO: remove this on public release, only for testing!
-Route::get('/test', function () {
-    return response()->json(['message' => 'Hello World!'], 200);
-});
-```
-
-## Laravel Command um alle Routes zu sehen
-
-Wir können die Laravel Command Line verwenden, um alle Routes zu sehen. Führe den folgenden Befehl aus:
-
-```bash
-sail artisan route:list
-```
-
-Die /api/test Route sollte in der Liste erscheinen.
 
 ## Postman für das Testen der API einrichten
 
